@@ -1,1 +1,0 @@
-# Red-Sismologica-Nacional
