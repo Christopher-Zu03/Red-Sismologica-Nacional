@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerta Sísmica - Costa Rica</title>
+    <style>
+        /* Estilos generales */
+        body {
+            background-color: black;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Contenedores de las dos páginas */
+        .seismic-screen, .surprise-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: opacity 1s ease-in-out;
+            visibility: visible;
+        }
+
+        .seismic-screen {
+            z-index: 10;
+        }
+
+        .surprise-screen {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            z-index: 20;
+            background-color: black;
+        }
+        
+        /* Estilos de la página de sismos (cebo) */
+        .seismic-screen {
+            background-color: #222;
+            color: #eee;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .seismic-screen h1 {
+            color: #FF5733;
+            text-align: center;
+            font-size: 8vw;
+            margin: 0;
+            padding-top: 20px;
+            font-family: 'Georgia', serif;
+        }
+        .seismic-screen h2 {
+            text-align: center;
+            font-size: 4vw;
+            color: #ccc;
+            font-weight: normal;
+        }
+        .seismic-screen .report-time {
+            display: block;
+            text-align: center;
+            font-size: 3vw;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+        .seismic-screen .latest-quakes {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .seismic-screen .latest-quakes h3 {
+            font-size: 5vw;
+            border-bottom: 2px solid #555;
+            padding-bottom: 5px;
+        }
+        .seismic-screen .quake-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #444;
+            padding-bottom: 10px;
+        }
+        .seismic-screen .quake-magnitude {
+            font-size: 6vw;
+            font-weight: bold;
+            color: #FFC300;
+            margin-right: 15px;
+        }
+        .seismic-screen .quake-details {
+            font-size: 3.5vw;
+        }
+        .seismic-screen .quake-details .location {
+            font-weight: bold;
+        }
+        @media (min-width: 768px) {
+            .seismic-screen h1 { font-size: 60px; }
+            .seismic-screen h2 { font-size: 24px; }
+            .seismic-screen .report-time { font-size: 18px; }
+            .seismic-screen .latest-quakes h3 { font-size: 30px; }
+            .seismic-screen .quake-magnitude { font-size: 50px; }
+            .seismic-screen .quake-details { font-size: 20px; }
+        }
+
+        /* Estilos de la página de sorpresa (existente) */
+        .hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .final-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: opacity 1s ease-in-out;
+        }
+        
+        /* Contenedor del letrero LED (flexible) */
+        .led-container {
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        /* Estilos del texto del letrero LED con efecto neón suave */
+        .led-sign {
+            font-size: 4vw;
+            font-weight: bold;
+            color: #fff;
+            animation: soft-glow 2s ease-in-out infinite alternate;
+        }
+
+        /* Animación del efecto neón suave */
+        @keyframes soft-glow {
+            from {
+                text-shadow:
+                    0 0 5px #fff,
+                    0 0 10px #fff,
+                    0 0 20px #9D00FF,
+                    0 0 30px #9D00FF,
+                    0 0 40px #9D00FF;
+            }
+            to {
+                text-shadow:
+                    0 0 10px #fff,
+                    0 0 20px #fff,
+                    0 0 30px #9D00FF,
+                    0 0 40px #9D00FF,
+                    0 0 50px #9D00FF;
+            }
+        }
+
+        /* Media Queries para ajustar tamaños en pantallas grandes */
+        @media (min-width: 768px) {
+            .led-sign { font-size: 30px; }
+        }
+        
+        /* Contenedor de corazones para controlar su posición */
+        #hearts-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 30; /* Asegura que los corazones estén encima de todo */
+        }
+
+        /* Animación de corazones con neón amarillo */
+        .heart {
+            position: absolute;
+            color: #fff; /* Corazón blanco */
+            font-size: 2em;
+            text-shadow:
+                0 0 5px #FFFF00, /* Brillo interior amarillo */
+                0 0 10px #FFFF00,
+                0 0 20px #FFFF00, /* Resplandor amarillo */
+                0 0 40px #FFFF00;
+            animation: fly-hearts 5s linear infinite;
+            pointer-events: none;
+            bottom: -50px;
+        }
+
+        @keyframes fly-hearts {
+            0% {
+                transform: translateY(0) scale(0.5) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) scale(1.5) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Primera pantalla: El cebo de sismos -->
+    <div class="seismic-screen" id="seismic-screen">
+        <h1>Últimos Sismos</h1>
+        <h2>Red Sismológica Nacional - OVSICORI</h2>
+        <span class="report-time" id="report-time"></span>
+        <div class="latest-quakes">
+            <h3>Reportes Recientes</h3>
+            <div class="quake-item">
+                <span class="quake-magnitude">5.2</span>
+                <div class="quake-details">
+                    <span class="location">San Rafael, Cartago</span><br>
+                    <span>Profundidad: 15 km</span><br>
+                    <span>Hora: Hace 5 minutos</span>
+                </div>
+            </div>
+            <div class="quake-item">
+                <span class="quake-magnitude">4.8</span>
+                <div class="quake-details">
+                    <span class="location">Volcán Turrialba</span><br>
+                    <span>Profundidad: 5 km</span><br>
+                    <span>Hora: Hace 45 minutos</span>
+                </div>
+            </div>
+            <div class="quake-item">
+                <span class="quake-magnitude">3.9</span>
+                <div class="quake-details">
+                    <span class="location">Jacó, Garabito</span><br>
+                    <span>Profundidad: 30 km</span><br>
+                    <span>Hora: Hace 1 hora</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Segunda pantalla: La sorpresa (oculta al inicio) -->
+    <div class="surprise-screen" id="surprise-screen">
+        <!-- Pantalla final: Mensaje LED -->
+        <div class="final-screen hidden" id="final-screen">
+            <div class="led-container">
+                <div class="led-sign" id="led-sign"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contenedor para los corazones -->
+    <div id="hearts-container"></div>
+
+    <script>
+        const seismicScreen = document.getElementById('seismic-screen');
+        const surpriseScreen = document.getElementById('surprise-screen');
+        const reportTime = document.getElementById('report-time');
+        const heartsContainer = document.getElementById('hearts-container');
+
+        const finalScreen = document.getElementById('final-screen');
+        const ledSign = document.getElementById('led-sign');
+        const message = "Te amo muchísimo mi niña hermosa, sos lo mejor de mi vida y lo que más amo en este mundo, te amo como no tenes idea y como nunca he amado, siempre vas a ser la princesa de mi corazón y quien me alegra mis días siempre, no sé que haria sin vos mi amor, sos lo mejor de esta vida, te adoro te adoro te adoooorooooooooo";
+
+        // Muestra la fecha y hora actual en la página de sismos
+        function updateReportTime() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            reportTime.textContent = `Última actualización: ${now.toLocaleDateString('es-CR', options)}`;
+        }
+        updateReportTime();
+
+        // Espera 5 segundos para ocultar la página de sismos
+        setTimeout(() => {
+            seismicScreen.style.opacity = '0';
+            setTimeout(() => {
+                seismicScreen.style.visibility = 'hidden';
+                surpriseScreen.style.opacity = '1';
+                surpriseScreen.style.visibility = 'visible';
+                surpriseScreen.style.pointerEvents = 'auto';
+                
+                // Espera 2 segundos de pantalla negra antes de mostrar el mensaje
+                setTimeout(() => {
+                    finalScreen.classList.remove('hidden');
+                    startLedText();
+                }, 2000);
+                
+            }, 1000); // 1 segundo para la transición
+        }, 3000); // 5 segundos de espera
+
+        function startLedText() {
+            let i = 0;
+            const typingEffect = setInterval(() => {
+                if (i <= message.length) {
+                    ledSign.textContent = message.substring(0, i);
+                    i++;
+                } else {
+                    clearInterval(typingEffect);
+                    
+                    setTimeout(startHearts, 1000);
+                }
+            }, 100);
+        }
+
+        function startHearts() {
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.classList.add('heart');
+                heart.textContent = '♡';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.animationDuration = Math.random() * 3 + 4 + 's';
+                heartsContainer.appendChild(heart);
+
+                setTimeout(() => {
+                    heart.remove();
+                }, 7000);
+            }, 300);
+        }
+    </script>
+
+</body>
+</html>
